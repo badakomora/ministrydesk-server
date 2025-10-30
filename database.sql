@@ -6,6 +6,7 @@ CREATE TABLE users (
   email VARCHAR(100) UNIQUE,
   role SMALLINT,
   church VARCHAR(100),
-  status SMALLINT DEFAULT 1,
+  status SMALLINT DEFAULT 0,
+  subscription SMALLINT DEFAULT 0;
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
