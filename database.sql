@@ -1,6 +1,6 @@
 CREATE TABLE users (
-  id SERIAL PRIMARY KEY,         -- internal auto id
-  idnumber BIGINT UNIQUE,        -- or VARCHAR if numbers may start with zero
+  id SERIAL PRIMARY KEY,         
+  idnumber BIGINT UNIQUE,        
   fullname VARCHAR(100) NOT NULL,
   phonenumber VARCHAR(20) UNIQUE NOT NULL,
   email VARCHAR(100) UNIQUE,

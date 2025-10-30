@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
+import user  from "./Routes/users.js"; 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT;
 
-// const user = require("./Routes/users.js"); 
+
 
 
 const allowedClients = [
@@ -34,7 +35,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-// app.use('/user', user);
+app.use('/user', user);
 
 // Basic route for testing
 app.get('/', (req, res) => {
