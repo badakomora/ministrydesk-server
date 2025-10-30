@@ -2,8 +2,11 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,6 +15,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "nodemon": "^3.1.10",
     "pg": "^8.16.3"
