@@ -11,13 +11,13 @@ router.post("/signup", async (req, res) => {
       phonenumber,
       email,
       role,
-      church,
+      churchid, // use churchid from frontend
     } = req.body;
 
     // 1) Validate required fields
-    if (!fullname || !phonenumber) {
+    if (!fullname || !phonenumber || !churchid) {
       return res.status(400).json({
-        error: "Full name and phone number are required",
+        error: "Full name, phone number, and church selection are required",
       });
     }
 
@@ -36,11 +36,11 @@ router.post("/signup", async (req, res) => {
     // 3) Insert user
     const result = await pool.query(
       `
-      INSERT INTO users (idnumber, fullname, phonenumber, email, role, church)
+      INSERT INTO users (idnumber, fullname, phonenumber, email, role, churchid)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
       `,
-      [idnumber, fullname, phonenumber, email, role, church]
+      [idnumber, fullname, phonenumber, email, role, churchid] // <-- corrected
     );
 
     return res.status(201).json({
