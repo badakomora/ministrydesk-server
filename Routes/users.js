@@ -67,7 +67,7 @@ router.post("/login", async (req, res) => {
 
     // 1️⃣ Check if phone exists
     const user = await pool.query(
-      `SELECT fullname, phonenumber FROM users WHERE phonenumber = $1`,
+      `SELECT fullname, phonenumber, role FROM users WHERE phonenumber = $1`,
       [phonenumber]
     );
 
@@ -75,23 +75,24 @@ router.post("/login", async (req, res) => {
       return res.status(404).json({ error: "Phone number not registered" });
     }
 
-    const { fullname } = user.rows[0];
+    const { fullname,role } = user.rows[0];
 
     // 2️⃣ Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
 
     // 3️⃣ Save OTP in DB
     await pool.query(
-      `UPDATE users SET otp = $1, otp_expiry = NOW() + INTERVAL '5 minutes' WHERE phonenumber = $2`,
+      `UPDATE users SET otp = $1, otpexpiry = NOW() + INTERVAL '5 minutes' WHERE phonenumber = $2`,
       [otp, phonenumber]
     );
 
     // 4️⃣ Send back response
     return res.json({
       message: "OTP sent successfully",
-      otp, // ⚠️ for testing only
+      otp,
       phonenumber,
       fullname,
+      role
     });
   } catch (err) {
     console.error("Login error:", err);
