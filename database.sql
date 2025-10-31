@@ -25,5 +25,8 @@ CREATE TABLE users (
   churchid INT NOT NULL,
   status SMALLINT DEFAULT 0,
   subscription SMALLINT DEFAULT 0,
+  otp VARCHAR(6),                     -- 🔹 stores temporary 6-digit OTP
+  otpexpiry TIMESTAMP,               -- 🔹 stores OTP expiration time
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+

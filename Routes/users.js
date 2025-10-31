@@ -3,7 +3,7 @@ import pool from "../db.js";  // adjust path to your db connection
 
 const router = express.Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
     const {
       idnumber,
@@ -50,6 +50,86 @@ router.post("/signup", async (req, res) => {
 
   } catch (err) {
     console.error("Signup error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+// ---------- LOGIN (Step 1: Verify phone and send OTP) ----------
+router.post("/login", async (req, res) => {
+  try {
+    const { phonenumber } = req.body;
+
+    if (!phonenumber) {
+      return res.status(400).json({ error: "Phone number is required" });
+    }
+
+    // 1️⃣ Check if phone exists
+    const user = await pool.query(
+      `SELECT fullname, phonenumber FROM users WHERE phonenumber = $1`,
+      [phonenumber]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: "Phone number not registered" });
+    }
+
+    const { fullname } = user.rows[0];
+
+    // 2️⃣ Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+
+    // 3️⃣ Save OTP in DB
+    await pool.query(
+      `UPDATE users SET otp = $1, otp_expiry = NOW() + INTERVAL '5 minutes' WHERE phonenumber = $2`,
+      [otp, phonenumber]
+    );
+
+    // 4️⃣ Send back response
+    return res.json({
+      message: "OTP sent successfully",
+      otp, // ⚠️ for testing only
+      phonenumber,
+      fullname,
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+// ---------- VERIFY OTP (Step 2: User enters OTP) ----------
+router.post("/verifyotp", async (req, res) => {
+  try {
+    const { phonenumber, otp } = req.body;
+
+    if (!phonenumber || !otp) {
+      return res.status(400).json({ error: "Phone and OTP are required" });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM users WHERE phonenumber = $1 AND otp = $2 AND otpexpiry > NOW()`,
+      [phonenumber, otp]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid or expired OTP" });
+    }
+
+    // Optional: clear OTP after successful verification
+    await pool.query(
+      `UPDATE users SET otp = NULL, otpexpiry = NULL WHERE phonenumber = $1`,
+      [phonenumber]
+    );
+
+    return res.json({
+      message: "Login successful",
+      user: result.rows[0],
+    });
+  } catch (err) {
+    console.error("OTP verification error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
