@@ -75,7 +75,7 @@ router.post("/login", async (req, res) => {
       return res.status(404).json({ error: "Phone number not registered" });
     }
 
-    const { fullname,role } = user.rows[0];
+    const { idnumber,fullname,email, role, churchid } = user.rows[0];
 
     // 2️⃣ Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
@@ -90,9 +90,12 @@ router.post("/login", async (req, res) => {
     return res.json({
       message: "OTP sent successfully",
       otp,
-      phonenumber,
+      idnumber,
       fullname,
-      role
+      phonenumber,
+      email,
+      role,
+      churchid
     });
   } catch (err) {
     console.error("Login error:", err);
