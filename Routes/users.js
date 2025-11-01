@@ -67,7 +67,7 @@ router.post("/login", async (req, res) => {
 
     // 1️⃣ Check if phone exists
     const user = await pool.query(
-      `SELECT fullname, phonenumber, role FROM users WHERE phonenumber = $1`,
+      `SELECT fullname, phonenumber, role, email, churchid, idnumber FROM users WHERE phonenumber = $1`,
       [phonenumber]
     );
 
