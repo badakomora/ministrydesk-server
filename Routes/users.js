@@ -67,9 +67,11 @@ router.post("/login", async (req, res) => {
 
     // 1️⃣ Check if phone exists
     const user = await pool.query(
-      `SELECT fullname, phonenumber, role, email, churchid, idnumber FROM users WHERE phonenumber = $1`,
-      [phonenumber]
-    );
+  `SELECT fullname, phonenumber, role, email, churchid, idnumber, subscription, datecreated 
+   FROM users WHERE phonenumber = $1`,
+  [phonenumber]
+);
+
 
     if (user.rows.length === 0) {
       return res.status(404).json({ error: "Phone number not registered" });
@@ -116,7 +118,9 @@ router.post("/verifyotp", async (req, res) => {
     }
 
     const result = await pool.query(
-      `SELECT * FROM users WHERE phonenumber = $1 AND otp = $2 AND otpexpiry > NOW()`,
+      `SELECT fullname, phonenumber, role, email, churchid, idnumber, subscription, datecreated 
+       FROM users 
+       WHERE phonenumber = $1 AND otp = $2 AND otpexpiry > NOW()`,
       [phonenumber, otp]
     );
 
@@ -139,5 +143,6 @@ router.post("/verifyotp", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 export default router;
