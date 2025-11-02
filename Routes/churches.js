@@ -59,6 +59,33 @@ router.get("/list", async (req, res) => {
   }
 });
 
+// ✅ Get a single church by ID
+router.post("/church", async (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ message: "Church ID is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT name FROM churches WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Church not found" });
+    }
+
+    return res.json({
+      message: "Church fetched successfully",
+      church: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error fetching church:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 export default router;
