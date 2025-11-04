@@ -122,7 +122,7 @@ router.post("/verifyotp", async (req, res) => {
       [phonenumber, otp]
     );
 
-    if (result.rows.length === 0) {ss
+    if (result.rows.length === 0) {
       return res.status(400).json({ error: "Invalid or expired OTP" });
     }
 
@@ -142,4 +142,19 @@ router.post("/verifyotp", async (req, res) => {
   }
 });
 
+
+router.get("/list", async (req, res) => {
+  try {
+    const query = `
+      SELECT * FROM users
+      ORDER BY id DESC
+    `;
+
+    const result = await pool.query(query);
+    res.json(result.rows); // return list as array
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error fetching users" });
+  }
+});
 export default router;
