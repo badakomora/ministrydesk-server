@@ -143,14 +143,16 @@ router.post("/verifyotp", async (req, res) => {
 });
 
 
-router.get("/list", async (req, res) => {
+router.post("/list", async (req, res) => {
   try {
+    const {churchid} = req.body
     const query = `
-      SELECT * FROM users
+      SELECT * FROM users 
+      WHERE churchid = $1
       ORDER BY id DESC
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(query, [churchid]);
     res.json(result.rows); // return list as array
   } catch (error) {
     console.error("Error fetching users:", error);
