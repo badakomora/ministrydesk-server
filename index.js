@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import user  from "./Routes/users.js"; 
 import church  from "./Routes/churches.js"; 
+import item from "./Routes/items.js";
 dotenv.config();
 
 const app = express();
@@ -38,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/user', user);
 app.use('/church', church);
-
+app.use('/item', item);
 // Basic route for testing
 app.get('/', (req, res) => {
   res.send('Ministry Desk API is running');
