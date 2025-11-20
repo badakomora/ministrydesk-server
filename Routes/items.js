@@ -1,36 +1,32 @@
 // server/routes/items.js
 import express from "express";
 import multer from "multer";
+import pool from "../db.js"; // your PostgreSQL connection
 import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "url"
 
-const router = express.Router();
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-// ⭐ Fix __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ⭐ Create uploads folder if it doesn't exist
-const UPLOAD_FOLDER = path.join(__dirname, "../uploads");
-if (!fs.existsSync(UPLOAD_FOLDER)) {
-  fs.mkdirSync(UPLOAD_FOLDER, { recursive: true });
-}
-
+const router = express.Router()
+const UPLOAD_FOLDER = path.join(__dirname, "../uploads")
 // ⭐ Multer disk storage setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, UPLOAD_FOLDER);
+    cb(null, UPLOAD_FOLDER)
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
+    cb(null, uniqueSuffix + path.extname(file.originalname))
   },
-});
+})
 
-const upload = multer({ storage });
+const upload = multer({ storage: storage }) // Initialize multer with the storage configuration
 
-// ⭐ POST /items/create
+const getFileServerUrl = (filename, folder = "uploads") => {
+  const serverUrl = "http://localhost:4000"
+  return `${serverUrl}/${folder}/${filename}`
+}
 router.post(
   "/create",
   upload.fields([
@@ -40,7 +36,6 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      // Extract form fields
       const {
         churchid,
         userid,
@@ -49,34 +44,102 @@ router.post(
         title,
         datePosted,
         description,
-        showDownload,
-        showComment,
-        showContribution,
-        showDonation,
+        offerTithes = 0,
+        offerDonations = 0,
+        requestSpecialPrayers = 0,
+        contributeOffering = 0,
+        verses = [] // <-- expecting array of titles
       } = req.body;
 
-      // Extract files
       const documentFile = req.files?.documentFile?.[0] || null;
       const audioFile = req.files?.audioFile?.[0] || null;
       const carouselImages = req.files?.carouselImages || [];
 
-      // Log for debug
-      console.log("Church ID:", churchid);
-      console.log("User ID:", userid);
-      console.log("Category:", category);
-      console.log("Document file path:", documentFile?.path);
-      console.log("Audio file path:", audioFile?.path);
-      console.log("Carousel images paths:", carouselImages.map(f => f.path));
+      const documentFileName = documentFile?.filename || null;
+      const audioFileName = audioFile?.filename || null;
+      const documentUrl = documentFile
+        ? getFileServerUrl(documentFileName, "uploads")
+        : null;
+      const audioUrl = audioFile
+        ? getFileServerUrl(audioFileName, "uploads")
+        : null;
 
-      // TODO: Insert into your DB here
-      // Example: await db.insertItem({ churchid, userid, category, ... });
+      // Convert offer fields to numbers
+      const offerTithesNum = Number(offerTithes) || 0;
+      const offerDonationsNum = Number(offerDonations) || 0;
+      const requestSpecialPrayersNum = Number(requestSpecialPrayers) || 0;
+      const contributeOfferingNum = Number(contributeOffering) || 0;
 
-      res.json({ success: true, message: "Uploaded successfully" });
+      // Ensure verses is an array
+      const versesArray = Array.isArray(verses) ? verses : [verses];
+
+      // Insert item
+      const inserted = await pool.query(
+        `INSERT INTO items 
+          (churchid, userid, category, department, title, datePosted, description,
+           documentFile, audioFile, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering, verses)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         RETURNING id`,
+        [
+          churchid,
+          userid,
+          category,
+          department,
+          title,
+          datePosted,
+          description,
+          documentUrl,
+          audioUrl,
+          offerTithesNum,
+          offerDonationsNum,
+          requestSpecialPrayersNum,
+          contributeOfferingNum,
+          versesArray,
+        ]
+      );
+
+      const itemId = inserted.rows[0].id;
+      console.log("Saved item id:", itemId);
+
+      // Insert carousel images
+      for (const img of carouselImages) {
+        const imageUrl = getFileServerUrl(img.filename, "uploads");
+        await pool.query(
+          `INSERT INTO carouselfiles (itemid, filepath)
+           VALUES ($1, $2)`,
+          [itemId, imageUrl]
+        );
+      }
+
+      res.json({ success: true, message: "Uploaded successfully", itemId });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error" });
     }
   }
 );
+
+
+router.get("/list", async (req, res) => {
+  try {
+    const items = await pool.query(
+      `SELECT 
+          i.*, 
+          u.fullname AS userid, 
+          COALESCE(json_agg(c.filepath) FILTER (WHERE c.filepath IS NOT NULL), '[]') AS carouselImages
+       FROM items i
+       LEFT JOIN users u ON u.id = i.userid
+       LEFT JOIN carouselfiles c ON c.itemid = i.id
+       GROUP BY i.id, u.fullname
+       ORDER BY i.id DESC`
+    );
+
+    res.json(items.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 export default router;

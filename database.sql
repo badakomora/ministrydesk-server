@@ -30,3 +30,33 @@ CREATE TABLE users (
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE items (
+  id SERIAL PRIMARY KEY,
+  churchid INTEGER NOT NULL,
+  userid INTEGER NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  department VARCHAR(255),
+  title VARCHAR(255) NOT NULL,
+  datePosted DATE NOT NULL,
+  description TEXT,
+
+  documentFile VARCHAR(500),
+  audioFile VARCHAR(500),
+
+  offerTithes INTEGER DEFAULT 0,
+  offerDonations INTEGER DEFAULT 0,
+  requestSpecialPrayers INTEGER DEFAULT 0,
+  contributeOffering INTEGER DEFAULT 0,
+
+  verses TEXT[] DEFAULT '{}',
+
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE carouselfiles (
+  id SERIAL PRIMARY KEY,
+  itemid INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  filepath VARCHAR(500) NOT NULL
+);
