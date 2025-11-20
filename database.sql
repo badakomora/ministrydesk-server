@@ -51,7 +51,8 @@ CREATE TABLE items (
 
   verses TEXT[] DEFAULT '{}',
 
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  verses TEXT[] DEFAULT '{}'
 );
 
 
