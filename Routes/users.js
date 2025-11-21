@@ -147,7 +147,7 @@ router.post("/verifyotp", async (req, res) => {
 router.post("/list", async (req, res) => {
   try {
     const {churchid} = req.body
-    const query = `
+    const query =`
       SELECT * FROM users 
       WHERE churchid = $1
       ORDER BY id DESC

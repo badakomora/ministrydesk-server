@@ -120,21 +120,13 @@ router.post(
 );
 
 
-router.get("/list", async (req, res) => {
+router.get("/itemlist/:userid", async (req, res) => {
   try {
+    const { userid } = req.params;
     const items = await pool.query(
       `SELECT 
-    i.*, 
-    u.fullname AS postedBy,
-    ch.name AS churchName,
-    COALESCE(json_agg(c.filepath) FILTER (WHERE c.filepath IS NOT NULL), '[]') AS carouselImages
-FROM items i
-LEFT JOIN users u ON u.id = i.userid
-LEFT JOIN churches ch ON ch.id = i.churchid
-LEFT JOIN carouselfiles c ON c.itemid = i.id
-GROUP BY i.id, u.fullname, ch.name
-ORDER BY i.id DESC;
-`
+      items.*  FROM items
+      WHERE items.userid = $1;`, [userid]
     );
 
     res.json(items.rows);
@@ -144,5 +136,27 @@ ORDER BY i.id DESC;
   }
 });
 
+
+router.get("/list", async (req, res) => {
+  try {
+    const items = await pool.query(
+    `SELECT 
+    i.*, 
+    u.fullname AS postedBy,
+    ch.name AS churchName,
+    COALESCE(json_agg(c.filepath) FILTER (WHERE c.filepath IS NOT NULL), '[]') AS carouselImages
+    FROM items i
+    LEFT JOIN users u ON u.id = i.userid
+    LEFT JOIN churches ch ON ch.id = i.churchid
+    LEFT JOIN carouselfiles c ON c.itemid = i.id
+    GROUP BY i.id, u.fullname, ch.name
+    ORDER BY i.id DESC;`);
+
+    res.json(items.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 export default router;
