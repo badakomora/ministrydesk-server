@@ -96,8 +96,7 @@ router.post("/login", async (req, res) => {
 
     // 1️⃣ Check if phone exists
     const user = await pool.query(
-  `SELECT fullname, phonenumber, role, email, churchid, idnumber, subscription, datecreated 
-   FROM users WHERE phonenumber = $1`,
+  `SELECT * FROM users WHERE phonenumber = $1`,
   [phonenumber]
 );
 
@@ -106,7 +105,7 @@ router.post("/login", async (req, res) => {
       return res.status(404).json({ error: "Phone number not registered" });
     }
 
-    const { id, idnumber,fullname,email, role, churchid, subscription,datecreated } = user.rows[0];
+    const { id, idnumber, fullname, email, nationalrole, executiverole, districtrole, assemblyrole, churchid, subscription, datecreated } = user.rows[0];
 
     // 2️⃣ Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
@@ -126,7 +125,10 @@ router.post("/login", async (req, res) => {
       fullname,
       phonenumber,
       email,
-      role,
+      nationalrole, 
+      executiverole, 
+      districtrole, 
+      assemblyrole,
       churchid,
       subscription,
       datecreated
