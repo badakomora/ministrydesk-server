@@ -10,49 +10,95 @@ router.post("/register", async (req, res) => {
       fullname,
       phonenumber,
       email,
-      role,
-      churchid, // use churchid from frontend
-    } = req.body;
+      nationalRole,
+      executiveRole,
+      districtRole,
+      assemblyRole,
+      churchid,
+    } = req.body
 
     // 1) Validate required fields
     if (!fullname || !phonenumber || !churchid) {
       return res.status(400).json({
         error: "Full name, phone number, and church selection are required",
-      });
+      })
+    }
+
+    if (!nationalRole && !executiveRole && !districtRole && !assemblyRole) {
+      return res.status(400).json({
+        error: "At least one role selection is required",
+      })
     }
 
     // 2) Check duplicates
-    const existing = await pool.query(
-      `SELECT * FROM users WHERE idnumber = $1 OR phonenumber = $2 OR email = $3`,
-      [idnumber || null, phonenumber, email || null]
-    );
+    const existing = await pool.query(`SELECT * FROM users WHERE idnumber = $1 OR phonenumber = $2 OR email = $3`, [
+      idnumber || null,
+      phonenumber,
+      email || null,
+    ])
 
     if (existing.rows.length > 0) {
       return res.status(409).json({
         error: "User with same ID number, phone, or email already exists",
-      });
+      })
     }
 
-    // 3) Insert user
+    let primaryRole = null
+    const roleHierarchy = {
+      national: nationalRole || null,
+      executive: executiveRole || null,
+      district: districtRole || null,
+      assembly: assemblyRole || null,
+    }
+
+    if (nationalRole) primaryRole = nationalRole
+    else if (executiveRole) primaryRole = executiveRole
+    else if (districtRole) primaryRole = districtRole
+    else if (assemblyRole) primaryRole = assemblyRole
+
+    // 3) Insert user with cascading roles
     const result = await pool.query(
       `
-      INSERT INTO users (idnumber, fullname, phonenumber, email, role, churchid)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO users (
+        idnumber, 
+        fullname, 
+        phonenumber, 
+        email, 
+        role, 
+        national_role,
+        executive_role,
+        district_role,
+        assembly_role,
+        role_hierarchy,
+        churchid
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
       `,
-      [idnumber, fullname, phonenumber, email, role, churchid] // <-- corrected
-    );
+      [
+        idnumber,
+        fullname,
+        phonenumber,
+        email,
+        primaryRole, // Primary role for backward compatibility
+        nationalRole,
+        executiveRole,
+        districtRole,
+        assemblyRole,
+        JSON.stringify(roleHierarchy), // Store complete hierarchy as JSON
+        churchid,
+      ],
+    )
 
     return res.status(201).json({
       message: "User registered successfully",
       user: result.rows[0],
-    });
-
+    })
   } catch (err) {
-    console.error("Signup error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Signup error:", err)
+    return res.status(500).json({ error: "Internal server error" })
   }
-});
+})
 
 
 

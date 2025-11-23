@@ -22,6 +22,11 @@ CREATE TABLE users (
   phonenumber VARCHAR(20) UNIQUE NOT NULL,
   email VARCHAR(100) UNIQUE,
   role SMALLINT,
+  national_role SMALLINT,
+  executive_role SMALLINT,
+  district_role SMALLINT,
+  assembly_role SMALLINT,
+  role_hierarchy JSONB,
   churchid INT NOT NULL,
   status SMALLINT DEFAULT 0,
   subscription SMALLINT DEFAULT 0,
@@ -29,6 +34,9 @@ CREATE TABLE users (
   otpexpiry TIMESTAMP,               -- 🔹 stores OTP expiration time
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
 
 
 CREATE TABLE items (
