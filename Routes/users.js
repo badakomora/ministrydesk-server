@@ -43,19 +43,6 @@ router.post("/register", async (req, res) => {
       })
     }
 
-    let primaryRole = null
-    const roleHierarchy = {
-      national: nationalRole || null,
-      executive: executiveRole || null,
-      district: districtRole || null,
-      assembly: assemblyRole || null,
-    }
-
-    if (nationalRole) primaryRole = nationalRole
-    else if (executiveRole) primaryRole = executiveRole
-    else if (districtRole) primaryRole = districtRole
-    else if (assemblyRole) primaryRole = assemblyRole
-
     // 3) Insert user with cascading roles
     const result = await pool.query(
       `
@@ -63,16 +50,14 @@ router.post("/register", async (req, res) => {
         idnumber, 
         fullname, 
         phonenumber, 
-        email, 
-        role, 
-        national_role,
-        executive_role,
-        district_role,
-        assembly_role,
-        role_hierarchy,
+        email,  
+        nationalrole,
+        executiverole,
+        districtrole,
+        assemblyrole,
         churchid
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *;
       `,
       [
@@ -80,12 +65,10 @@ router.post("/register", async (req, res) => {
         fullname,
         phonenumber,
         email,
-        primaryRole, // Primary role for backward compatibility
         nationalRole,
         executiveRole,
         districtRole,
         assemblyRole,
-        JSON.stringify(roleHierarchy), // Store complete hierarchy as JSON
         churchid,
       ],
     )
@@ -200,6 +183,21 @@ router.post("/list", async (req, res) => {
     `;
 
     const result = await pool.query(query, [churchid]);
+    res.json(result.rows); // return list as array
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server error fetching users" });
+  }
+});
+
+router.get("/users", async (req, res) => {
+  try {
+    const query =`
+      SELECT * FROM users 
+      ORDER BY id DESC
+    `;
+
+    const result = await pool.query(query);
     res.json(result.rows); // return list as array
   } catch (error) {
     console.error("Error fetching users:", error);
