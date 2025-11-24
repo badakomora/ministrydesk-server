@@ -183,9 +183,8 @@ router.post("/list", async (req, res) => {
       WHERE churchid = $1
       ORDER BY id DESC
     `;
-
     const result = await pool.query(query, [churchid]);
-    res.json(result.rows); // return list as array
+    res.json(result.rows); 
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ message: "Server error fetching users" });

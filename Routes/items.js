@@ -159,4 +159,32 @@ router.get("/list", async (req, res) => {
   }
 });
 
+router.get("/list/:itemid", async (req, res) => {
+  try {
+    const { itemid } = req.params
+    const items = await pool.query(
+      `SELECT 
+  i.*,
+  u.fullname AS postedby,
+  ch.name AS churchName,
+  COALESCE(json_agg(c.filepath) FILTER (WHERE c.filepath IS NOT NULL), '[]') AS carouselImages
+FROM items i
+LEFT JOIN users u ON u.id = i.userid
+LEFT JOIN churches ch ON ch.id = i.churchid
+LEFT JOIN carouselfiles c ON c.itemid = i.id
+WHERE i.id = $1
+GROUP BY i.id, u.fullname, ch.name
+ORDER BY i.id DESC;
+
+`,
+      [itemid],
+    )
+    res.json(items.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Server error" })
+  }
+})
+
+
 export default router;
