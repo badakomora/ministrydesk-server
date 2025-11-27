@@ -67,3 +67,12 @@ CREATE TABLE carouselfiles (
   itemid INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   filepath VARCHAR(500) NOT NULL
 );
+
+
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY,
+  itemid INT NOT NULL,
+  userid INT NOT NULL,
+  comment TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);

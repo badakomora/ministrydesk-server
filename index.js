@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import user  from "./Routes/users.js"; 
 import church  from "./Routes/churches.js"; 
 import item from "./Routes/items.js";
+import comment from "./Routes/comments.js";
 import path from "path";
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/user', user);
 app.use('/church', church);
 app.use('/item', item);
+app.use('/comment', comment);
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 // Basic route for testing
 app.get('/', (req, res) => {
