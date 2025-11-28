@@ -37,18 +37,22 @@ router.get("/list/:itemid", async (req, res) => {
   try {
    const result = await pool.query(
   `SELECT 
-      c.id,
-      c.comment,
-      c.userid,
-      c.created_at,
-      u.fullname,
-      u.nationalrole, u.executiverole, u.districtrole, u.assemblyrole AS role,
-      ch.name AS churchname
-   FROM comments c
-   JOIN users u ON u.id = c.userid
-   JOIN churches ch ON u.churchid = ch.id
-   WHERE c.itemid = $1
-   ORDER BY c.created_at ASC`,
+  c.id,
+  c.comment,
+  c.userid,
+  c.created_at,
+  u.fullname,
+  u.nationalrole AS nationalrole,
+  u.executiverole AS executiverole,
+  u.districtrole AS districtrole,
+  u.assemblyrole AS assemblyrole,
+  ch.name AS churchname
+FROM comments c
+JOIN users u ON u.id = c.userid
+JOIN churches ch ON u.churchid = ch.id
+WHERE c.itemid = $1
+ORDER BY c.created_at DESC
+`,
   [itemid]
 );
 
