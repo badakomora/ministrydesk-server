@@ -55,13 +55,14 @@ router.post(
       const audioFile = req.files?.audioFile?.[0] || null;
       const carouselImages = req.files?.carouselImages || [];
 
-      const documentFileName = documentFile?.filename || null;
-      const audioFileName = audioFile?.filename || null;
+      // Save both the uploaded URL and the original filename
+      const documentFileName = documentFile?.originalname || null; // original filename
+      const audioFileName = audioFile?.filename || null; // saved filename on server
       const documentUrl = documentFile
-        ? getFileServerUrl(documentFileName, "uploads")
+        ? getFileServerUrl(documentFile.filename, "uploads")
         : null;
       const audioUrl = audioFile
-        ? getFileServerUrl(audioFileName, "uploads")
+        ? getFileServerUrl(audioFile.filename, "uploads")
         : null;
 
       // Convert offer fields to numbers
@@ -73,12 +74,12 @@ router.post(
       // Ensure verses is an array
       const versesArray = Array.isArray(verses) ? verses : [verses];
 
-      // Insert item
+      // Insert item, now also storing documentFileName
       const inserted = await pool.query(
         `INSERT INTO items 
           (churchid, userid, category, department, title, datePosted, description,
-           documentFile, audioFile, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering, verses)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+           documentFile, documentFileName, audioFile, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering, verses)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
          RETURNING id`,
         [
           churchid,
@@ -89,6 +90,7 @@ router.post(
           datePosted,
           description,
           documentUrl,
+          documentFileName, // <-- store original name
           audioUrl,
           offerTithesNum,
           offerDonationsNum,
@@ -111,13 +113,14 @@ router.post(
         );
       }
 
-      res.json({ success: true, message: "Uploaded successfully", itemId });
+      res.json({ success: true, message: "Uploaded successfully", itemId, documentFileName });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Server error" });
     }
   }
 );
+
 
 
 router.get("/itemlist/:userid", async (req, res) => {
@@ -161,30 +164,30 @@ router.get("/list", async (req, res) => {
 
 router.get("/list/:itemid", async (req, res) => {
   try {
-    const { itemid } = req.params
+    const { itemid } = req.params;
     const items = await pool.query(
       `SELECT 
-  i.*,
-  u.fullname AS postedby,
-  ch.name AS churchName,
-  COALESCE(json_agg(c.filepath) FILTER (WHERE c.filepath IS NOT NULL), '[]') AS carouselImages
-FROM items i
-LEFT JOIN users u ON u.id = i.userid
-LEFT JOIN churches ch ON ch.id = i.churchid
-LEFT JOIN carouselfiles c ON c.itemid = i.id
-WHERE i.id = $1
-GROUP BY i.id, u.fullname, ch.name
-ORDER BY i.id DESC;
+        i.*,
+        i.documentFileName, 
+        u.fullname AS postedby,
+        ch.name AS churchName,
+        COALESCE(json_agg(c.filepath) FILTER (WHERE c.filepath IS NOT NULL), '[]') AS carouselImages
+      FROM items i
+      LEFT JOIN users u ON u.id = i.userid
+      LEFT JOIN churches ch ON ch.id = i.churchid
+      LEFT JOIN carouselfiles c ON c.itemid = i.id
+      WHERE i.id = $1
+      GROUP BY i.id, u.fullname, ch.name
+      ORDER BY i.id DESC`,
+      [itemid]
+    );
 
-`,
-      [itemid],
-    )
-    res.json(items.rows)
+    res.json(items.rows);
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "Server error" })
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
-})
+});
 
 
 export default router;

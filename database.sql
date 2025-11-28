@@ -48,6 +48,7 @@ CREATE TABLE items (
   description TEXT,
 
   documentFile VARCHAR(500),
+  documentFileName TEXT,
   audioFile VARCHAR(500),
 
   offerTithes INTEGER DEFAULT 0,
