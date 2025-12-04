@@ -77,3 +77,13 @@ CREATE TABLE comments (
   comment TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+
+CREATE TABLE accounts (
+    id SERIAL PRIMARY KEY,       -- unique ID for each transaction
+    userid INT NOT NULL,         -- ID of the user making the transaction
+    phone VARCHAR(15) NOT NULL,  -- phone number associated with the transaction
+    amount NUMERIC(12, 2) NOT NULL,  -- transaction amount
+    activity VARCHAR(50) NOT NULL,   -- type of transaction (e.g., deposit, subscription)
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW()  -- transaction time
+);
