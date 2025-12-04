@@ -6,7 +6,7 @@ const router = express.Router();
 // POST /transaction/deposit
 router.post("/deposit", async (req, res) => {
   try {
-    let { idnumber, phone, amount, activity } = req.body;
+    let { idnumber, phone, amount, activity, itemid } = req.body;
 
     // Validate required fields
     if (!phone || !amount || !activity) {
@@ -28,10 +28,10 @@ router.post("/deposit", async (req, res) => {
       userid = userResult.rows[0].id;
     }
     const transactionResult = await pool.query(
-      `INSERT INTO accounts (userid, phone, amount, activity, timestamp)
-       VALUES ($1, $2, $3, $4, NOW())
+      `INSERT INTO accounts (userid, phone, amount, activity, itemid, timestamp)
+       VALUES ($1, $2, $3, $4, $5, NOW())
        RETURNING *`,
-      [userid, phone, amount, activity]
+      [userid, phone, amount, activity, itemid]
     );
 
     return res.status(200).json({
