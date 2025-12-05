@@ -5,7 +5,8 @@ import user  from "./Routes/users.js";
 import church  from "./Routes/churches.js"; 
 import item from "./Routes/items.js";
 import comment from "./Routes/comments.js";
-import transaction from "./Routes/transaction.js";
+import message from "./Routes/messages.js";
+import transaction from "./Routes/transactions.js";
 import path from "path";
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use('/user', user);
 app.use('/church', church);
 app.use('/item', item);
 app.use('/comment', comment);
+app.use('/message', message);
 app.use('/transaction', transaction);
 
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));

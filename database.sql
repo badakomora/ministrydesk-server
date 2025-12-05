@@ -88,3 +88,12 @@ CREATE TABLE accounts (
     itemid INT
     timestamp TIMESTAMP NOT NULL DEFAULT NOW()  -- transaction time
 );
+
+CREATE TABLE messages (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+  message TEXT NOT NULL,
+   status INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
