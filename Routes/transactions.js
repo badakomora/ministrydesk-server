@@ -33,6 +33,15 @@ router.post("/deposit", async (req, res) => {
        RETURNING *`,
       [userid, phone, amount, activity, itemid]
     );
+    if(activity === 'Subscription'){
+      await pool.query(
+      `UPDATE users 
+       SET subscription = $1 
+       WHERE id = $2
+       RETURNING *`,
+      [1,userid]
+    );
+    }
 
     return res.status(200).json({
       message: "Transaction recorded successfully",
