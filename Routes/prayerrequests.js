@@ -37,30 +37,35 @@ router.post("/new", async (req, res) => {
   }
 });
 
-router.get("/prayerrequests", async (req, res) => {
+router.post("/prayerrequests", async (req, res) => {
   try {
-   const result = await pool.query(
-  `SELECT 
-      prayerrequests.id,
-      prayerrequests.userid,
-      users.fullname,
-      prayerrequests.description,
-      prayerrequests.status,
-      prayerrequests.created_at
-   FROM prayerrequests
-   INNER JOIN users ON prayerrequests.userid = users.id
-   ORDER BY prayerrequests.created_at DESC`
-);
+    const { churchid } = req.body;
 
+    if (!churchid) {
+      return res.status(400).json({ error: "churchid is required" });
+    }
 
-    res.status(200).json( result.rows);
+    const result = await pool.query(
+      `SELECT 
+        prayerrequests.id,
+        prayerrequests.userid,
+        prayerrequests.churchid,
+        users.fullname,
+        prayerrequests.description,
+        prayerrequests.status,
+        prayerrequests.created_at
+      FROM prayerrequests
+      INNER JOIN users ON prayerrequests.userid = users.id
+      WHERE prayerrequests.churchid = $1
+      ORDER BY prayerrequests.created_at DESC`,
+      [churchid]
+    );
 
+    res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching prayer requests:", error);
-    res.status(500).json({
-      success: false,
-      error: "Server error while fetching prayer requests",
-    });
+    res.status(500).json({ error: "Server error while fetching prayer requests" });
   }
 });
+
 export default router;

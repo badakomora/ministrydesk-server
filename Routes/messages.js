@@ -7,34 +7,54 @@ router.post("/new", async (req, res) => {
   try {
     const { name, phone, message } = req.body;
 
+    // Validate input
     if (!name || !phone || !message) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Insert into DB
-    const result = await pool.query(
-      `INSERT INTO messages (name, phone, message) 
-       VALUES ($1, $2, $3) 
-       RETURNING *`,
-      [name, phone, message]
+    // 1️⃣ Check if phone exists in `users` table
+    const userCheck = await pool.query(
+      `SELECT churchid FROM users WHERE phonenumber = $1 LIMIT 1`,
+      [phone]
     );
 
-    res.status(200).json({
-      message: "Message received and saved successfully!",
+    if (userCheck.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "User does not exist. Please register with us first." });
+    }
+
+    const churchid = userCheck.rows[0].churchid;
+
+    // 2️⃣ Insert message only if user exists
+    const result = await pool.query(
+      `INSERT INTO messages (name, phone, message, churchid)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [name, phone, message, churchid]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Message submitted successfully.",
       data: result.rows[0],
     });
+
   } catch (error) {
     console.error("Error saving message:", error);
-    res.status(500).json({ error: "Server error, please try again." });
+    return res.status(500).json({ error: "Server error, please try again." });
   }
 });
 
-router.get("/messages", async (req, res) => {
+
+router.post("/messages", async (req, res) => {
   try {
+    const { churchid } = req.body;
     const result = await pool.query(
-      `SELECT id, name, phone, message, status, created_at 
+      `SELECT id, name, phone, message, status, churchid, created_at 
        FROM messages
-       ORDER BY created_at DESC`
+       WHERE churchid = $1
+       ORDER BY created_at DESC`, [churchid]
     );
 
     res.json(result.rows);

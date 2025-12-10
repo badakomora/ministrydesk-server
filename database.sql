@@ -33,10 +33,6 @@ CREATE TABLE users (
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
-
-
 CREATE TABLE items (
   id SERIAL PRIMARY KEY,
   churchid INTEGER NOT NULL,
@@ -62,22 +58,11 @@ CREATE TABLE items (
   verses TEXT[] DEFAULT '{}'
 );
 
-
 CREATE TABLE carouselfiles (
   id SERIAL PRIMARY KEY,
   itemid INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   filepath VARCHAR(500) NOT NULL
 );
-
-
-CREATE TABLE comments (
-  id SERIAL PRIMARY KEY,
-  itemid INT NOT NULL,
-  userid INT NOT NULL,
-  comment TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
 
 CREATE TABLE accounts (
     id SERIAL PRIMARY KEY,       -- unique ID for each transaction
@@ -89,11 +74,20 @@ CREATE TABLE accounts (
     timestamp TIMESTAMP NOT NULL DEFAULT NOW()  -- transaction time
 );
 
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY,
+  itemid INT NOT NULL,
+  userid INT NOT NULL,
+  comment TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE messages (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   phone VARCHAR(50) NOT NULL,
   message TEXT NOT NULL,
+  churchid INT,
   status INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -102,6 +96,7 @@ CREATE TABLE prayerrequests(
   id SERIAL PRIMARY KEY,
   userid INT,
   description TEXT NOT NULL,
+  churchid INT,
   status INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
