@@ -37,4 +37,30 @@ router.post("/new", async (req, res) => {
   }
 });
 
+router.get("/prayerrequests", async (req, res) => {
+  try {
+   const result = await pool.query(
+  `SELECT 
+      prayerrequests.id,
+      prayerrequests.userid,
+      users.fullname,
+      prayerrequests.description,
+      prayerrequests.status,
+      prayerrequests.created_at
+   FROM prayerrequests
+   INNER JOIN users ON prayerrequests.userid = users.id
+   ORDER BY prayerrequests.created_at DESC`
+);
+
+
+    res.status(200).json( result.rows);
+
+  } catch (error) {
+    console.error("Error fetching prayer requests:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching prayer requests",
+    });
+  }
+});
 export default router;

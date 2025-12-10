@@ -29,4 +29,23 @@ router.post("/new", async (req, res) => {
   }
 });
 
+router.get("/messages", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, phone, message, status, created_at 
+       FROM messages
+       ORDER BY created_at DESC`
+    );
+
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching messages",
+    });
+  }
+});
+
 export default router;
