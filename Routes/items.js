@@ -48,6 +48,7 @@ router.post(
         offerDonations = 0,
         requestSpecialPrayers = 0,
         contributeOffering = 0,
+         visibility,
         verses = [] // <-- expecting array of titles
       } = req.body;
 
@@ -78,8 +79,8 @@ router.post(
       const inserted = await pool.query(
         `INSERT INTO items 
           (churchid, userid, category, department, title, datePosted, description,
-           documentFile, documentFileName, audioFile, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering, verses)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+           documentFile, documentFileName, audioFile, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering,  visibility,verses)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
          RETURNING id`,
         [
           churchid,
@@ -96,6 +97,7 @@ router.post(
           offerDonationsNum,
           requestSpecialPrayersNum,
           contributeOfferingNum,
+          visibility,
           versesArray,
         ]
       );

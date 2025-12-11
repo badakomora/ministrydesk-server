@@ -56,6 +56,7 @@ CREATE TABLE items (
 
   created_at TIMESTAMP DEFAULT NOW(),
   verses TEXT[] DEFAULT '{}'
+  visibility VARCHAR(50);
 );
 
 CREATE TABLE carouselfiles (
