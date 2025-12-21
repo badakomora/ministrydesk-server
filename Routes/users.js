@@ -11,9 +11,9 @@ router.post("/register", async (req, res) => {
       phonenumber,
       email,
       nationalRole,
-      executiveRole,
       districtRole,
       assemblyRole,
+      regionid,
       churchid,
     } = req.body
 
@@ -24,18 +24,18 @@ router.post("/register", async (req, res) => {
       })
     }
 
-    if (!nationalRole && !executiveRole && !districtRole && !assemblyRole) {
+    if (!nationalRole && !districtRole && !assemblyRole) {
       return res.status(400).json({
         error: "At least one role selection is required",
       })
     }
 
     // 2) Check duplicates
-    const existing = await pool.query(`SELECT * FROM users WHERE idnumber = $1 OR phonenumber = $2 OR email = $3`, [
-      idnumber || null,
-      phonenumber,
-      email || null,
-    ])
+    const existing = await pool.query(
+      `SELECT 1 FROM users 
+       WHERE idnumber = $1 OR phonenumber = $2 OR email = $3`,
+      [idnumber || null, phonenumber, email || null]
+    )
 
     if (existing.rows.length > 0) {
       return res.status(409).json({
@@ -43,18 +43,18 @@ router.post("/register", async (req, res) => {
       })
     }
 
-    // 3) Insert user with cascading roles
+    // 3) Insert user
     const result = await pool.query(
       `
       INSERT INTO users (
-        idnumber, 
-        fullname, 
-        phonenumber, 
-        email,  
+        idnumber,
+        fullname,
+        phonenumber,
+        email,
         nationalrole,
-        executiverole,
         districtrole,
         assemblyrole,
+        regionid,
         churchid
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -66,11 +66,11 @@ router.post("/register", async (req, res) => {
         phonenumber,
         email,
         nationalRole,
-        executiveRole,
         districtRole,
         assemblyRole,
+        regionid,
         churchid,
-      ],
+      ]
     )
 
     return res.status(201).json({

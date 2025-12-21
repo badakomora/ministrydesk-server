@@ -21,17 +21,22 @@ CREATE TABLE users (
   fullname VARCHAR(100) NOT NULL,
   phonenumber VARCHAR(20) UNIQUE NOT NULL,
   email VARCHAR(100) UNIQUE,
-  nationalrole SMALLINT,
-  executiverole SMALLINT,
-  districtrole SMALLINT,
-  assemblyrole SMALLINT,
+
+  nationalrole VARCHAR(5),     -- e.g. N1, N2
+  districtrole VARCHAR(5),     -- e.g. D1
+  assemblyrole VARCHAR(5),     -- e.g. A1
+
+  regionid INT,                  -- region as integer
   churchid INT NOT NULL,
+
   status SMALLINT DEFAULT 0,
   subscription SMALLINT DEFAULT 0,
-  otp VARCHAR(6),                     -- 🔹 stores temporary 6-digit OTP
-  otpexpiry TIMESTAMP,               -- 🔹 stores OTP expiration time
+
+  otp VARCHAR(6),              -- stores temporary 6-digit OTP
+  otpexpiry TIMESTAMP,         -- OTP expiration time
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE items (
   id SERIAL PRIMARY KEY,
