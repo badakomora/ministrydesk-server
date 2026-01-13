@@ -101,12 +101,12 @@ router.post("/deposit", generateToken, async (req, res) => {
     );
 
     // Optional subscription update
-    if (activity === "Subscription" && userid) {
-      await pool.query(
-        "UPDATE users SET subscription = true WHERE id = $1",
-        [userid]
-      );
-    }
+    // if (activity === "Subscription" && userid) {
+    //   await pool.query(
+    //     "UPDATE users SET subscription = true WHERE id = $1",
+    //     [userid]
+    //   );
+    // }
 
     return res.status(200).json({
       message: "STK Push initiated successfully",
