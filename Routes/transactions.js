@@ -180,9 +180,9 @@ router.post("/callback", async (req, res) => {
     if (activity === "Subscription" && userid) {
       await pool.query(
         `UPDATE users 
-         SET subscription = true 
-         WHERE id = $1`,
-        [userid]
+         SET subscription = $1 
+         WHERE id = $2`,
+        [1,userid]
       );
     }
 
