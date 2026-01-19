@@ -80,6 +80,7 @@ CREATE TABLE accounts (
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),  -- transaction time
     mpesaref VARCHAR(50),
     status VARCHAR(20) DEFAULT 'PENDING',
+    checkoutrequestid TEXT
 );
 
 CREATE TABLE comments (

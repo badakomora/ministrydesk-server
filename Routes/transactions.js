@@ -13,7 +13,9 @@ const MPESA_SHORTCODE = process.env.SHORTCODE;
 const PASSKEY = process.env.PASSKEY; // STK Push passkey
 const PUBLIC_URL = process.env.PUBLIC_URL; // Ngrok URL or live domain
 
-// Helper: generate MPESA timestamp YYYYMMDDHHMMSS
+// ----------------------
+// Helpers
+// ----------------------
 const getMpesaTimestamp = () => {
   const now = new Date();
   const yyyy = now.getFullYear().toString();
@@ -25,20 +27,18 @@ const getMpesaTimestamp = () => {
   return `${yyyy}${mm}${dd}${hh}${min}${ss}`;
 };
 
-// Helper: normalize phone number to 2547XXXXXXXX
+// Normalize phone to 2547XXXXXXXX
 const normalizePhone = (phone) => {
   let p = phone.trim();
-  if (p.startsWith("0")) {
-    return "254" + p.substring(1);
-  } else if (p.startsWith("+254")) {
-    return p.substring(1); // remove '+'
-  } else if (p.startsWith("254")) {
-    return p;
-  } else {
-    throw new Error("Invalid phone number format");
-  }
+  if (p.startsWith("0")) return "254" + p.substring(1);
+  if (p.startsWith("+254")) return p.substring(1);
+  if (p.startsWith("254")) return p;
+  throw new Error("Invalid phone number format");
 };
 
+// ----------------------
+// /deposit Endpoint
+// ----------------------
 router.post("/deposit", generateToken, async (req, res) => {
   try {
     const { idnumber, phone, amount, activity, itemid } = req.body;
@@ -47,8 +47,9 @@ router.post("/deposit", generateToken, async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const customerPhone = normalizePhone(phone); // normalize phone
+    const customerPhone = normalizePhone(phone);
 
+    // Find user ID if idnumber is provided
     let userid = null;
     if (idnumber) {
       const userResult = await pool.query(
@@ -64,13 +65,14 @@ router.post("/deposit", generateToken, async (req, res) => {
     // Save transaction as PENDING
     const transactionResult = await pool.query(
       `INSERT INTO accounts 
-        (userid, phone, amount, activity, itemid, timestamp)
-       VALUES ($1, $2, $3, $4, $5,  NOW())
+        (userid, phone, amount, activity, itemid, timestamp, status)
+       VALUES ($1, $2, $3, $4, $5, NOW(), 'PENDING')
        RETURNING *`,
       [userid, customerPhone, amount, activity, itemid || null]
     );
 
-    const txRef = `TXN${transactionResult.rows[0].id}`;
+    const txId = transactionResult.rows[0].id;
+    const txRef = `TXN${txId}`;
     const mpesaTimestamp = getMpesaTimestamp();
     const password = Buffer.from(`${MPESA_SHORTCODE}${PASSKEY}${mpesaTimestamp}`).toString("base64");
 
@@ -100,7 +102,13 @@ router.post("/deposit", generateToken, async (req, res) => {
       }
     );
 
-   
+    // Store CheckoutRequestID in DB
+    await pool.query(
+      `UPDATE accounts
+       SET checkoutrequestid = $1
+       WHERE id = $2`,
+      [mpesaRes.data.CheckoutRequestID, txId]
+    );
 
     return res.status(200).json({
       message: "STK Push initiated successfully",
@@ -118,28 +126,33 @@ router.post("/deposit", generateToken, async (req, res) => {
 });
 
 // ----------------------
-// STK Callback Endpoint
+// /callback Endpoint
 // ----------------------
 router.post("/callback", async (req, res) => {
   try {
-    const callback = req.body.Body.stkCallback;
-    console.log("STK CALLBACK:", callback);
+    const callback = req.body?.Body?.stkCallback;
 
-    if (callback.ResultCode !== 0) {
-      return res.json({ ResultCode: 0, ResultDesc: "Rejected" });
+    if (!callback) {
+      console.error("stkCallback not found!", req.body);
+      return res.json({ ResultCode: 1, ResultDesc: "No callback found" });
     }
 
-    // Extract metadata
-    const metadata = callback.CallbackMetadata.Item;
+    // Respond to M-Pesa immediately
+    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
 
+    if (callback.ResultCode !== 0) {
+      console.log("Transaction failed:", callback.ResultDesc);
+      return;
+    }
+
+    const metadata = callback.CallbackMetadata?.Item || [];
     const mpesaReceipt = metadata.find(i => i.Name === "MpesaReceiptNumber")?.Value;
-    const phone = metadata.find(i => i.Name === "PhoneNumber")?.Value;
+    const phone = normalizePhone(metadata.find(i => i.Name === "PhoneNumber")?.Value || "");
     const amount = metadata.find(i => i.Name === "Amount")?.Value;
-
-    // CheckoutRequestID is UNIQUE
     const checkoutId = callback.CheckoutRequestID;
 
-    // Fetch transaction details (THIS IS WHERE ACTIVITY COMES FROM)
+    console.log("STK Callback received:", { checkoutId, mpesaReceipt, phone, amount });
+
     const txResult = await pool.query(
       `SELECT id, userid, activity 
        FROM accounts 
@@ -148,12 +161,13 @@ router.post("/callback", async (req, res) => {
     );
 
     if (!txResult.rows.length) {
-      throw new Error("Transaction not found");
+      console.error("Transaction not found in DB for checkoutId:", checkoutId);
+      return;
     }
 
     const { id, userid, activity } = txResult.rows[0];
 
-    // Update transaction
+    // Update transaction as SUCCESS
     await pool.query(
       `UPDATE accounts
        SET mpesaref = $1,
@@ -162,7 +176,7 @@ router.post("/callback", async (req, res) => {
       [mpesaReceipt, id]
     );
 
-    // Handle subscription logic
+    // Handle subscription if applicable
     if (activity === "Subscription" && userid) {
       await pool.query(
         `UPDATE users 
@@ -172,12 +186,10 @@ router.post("/callback", async (req, res) => {
       );
     }
 
-    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    console.log("Transaction updated successfully for checkoutId:", checkoutId);
   } catch (err) {
     console.error("STK Callback error:", err);
-    return res.json({ ResultCode: 1, ResultDesc: "Failed" });
   }
 });
-
 
 export default router;
