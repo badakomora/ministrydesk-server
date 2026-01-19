@@ -76,8 +76,10 @@ CREATE TABLE accounts (
     phone VARCHAR(15) NOT NULL,  -- phone number associated with the transaction
     amount NUMERIC(12, 2) NOT NULL,  -- transaction amount
     activity VARCHAR(50) NOT NULL,   -- type of transaction (e.g., deposit, subscription)
-    itemid INT
-    timestamp TIMESTAMP NOT NULL DEFAULT NOW()  -- transaction time
+    itemid INT,
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW(),  -- transaction time
+    mpesaref VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'PENDING',
 );
 
 CREATE TABLE comments (

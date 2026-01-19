@@ -100,13 +100,7 @@ router.post("/deposit", generateToken, async (req, res) => {
       }
     );
 
-    // Optional subscription update
-    // if (activity === "Subscription" && userid) {
-    //   await pool.query(
-    //     "UPDATE users SET subscription = true WHERE id = $1",
-    //     [userid]
-    //   );
-    // }
+   
 
     return res.status(200).json({
       message: "STK Push initiated successfully",
@@ -128,25 +122,62 @@ router.post("/deposit", generateToken, async (req, res) => {
 // ----------------------
 router.post("/callback", async (req, res) => {
   try {
-    const data = req.body.Body.stkCallback;
-    console.log("STK CALLBACK:", data);
+    const callback = req.body.Body.stkCallback;
+    console.log("STK CALLBACK:", callback);
 
-    const txRef = data.AccountReference.replace("TXN", "");
-    const status = data.ResultCode === 0 ? "SUCCESS" : "FAILED";
+    if (callback.ResultCode !== 0) {
+      return res.json({ ResultCode: 0, ResultDesc: "Rejected" });
+    }
 
-    await pool.query(
-      `UPDATE accounts
-       SET status = $1,
-           mpesa_receipt = $2
-       WHERE id = $3`,
-      [status, data.MpesaReceiptNumber || null, txRef]
+    // Extract metadata
+    const metadata = callback.CallbackMetadata.Item;
+
+    const mpesaReceipt = metadata.find(i => i.Name === "MpesaReceiptNumber")?.Value;
+    const phone = metadata.find(i => i.Name === "PhoneNumber")?.Value;
+    const amount = metadata.find(i => i.Name === "Amount")?.Value;
+
+    // CheckoutRequestID is UNIQUE
+    const checkoutId = callback.CheckoutRequestID;
+
+    // Fetch transaction details (THIS IS WHERE ACTIVITY COMES FROM)
+    const txResult = await pool.query(
+      `SELECT id, userid, activity 
+       FROM accounts 
+       WHERE checkoutrequestid = $1`,
+      [checkoutId]
     );
 
-    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    if (!txResult.rows.length) {
+      throw new Error("Transaction not found");
+    }
+
+    const { id, userid, activity } = txResult.rows[0];
+
+    // Update transaction
+    await pool.query(
+      `UPDATE accounts
+       SET mpesaref = $1,
+           status = 'SUCCESS'
+       WHERE id = $2`,
+      [mpesaReceipt, id]
+    );
+
+    // Handle subscription logic
+    if (activity === "Subscription" && userid) {
+      await pool.query(
+        `UPDATE users 
+         SET subscription = true 
+         WHERE id = $1`,
+        [userid]
+      );
+    }
+
+    return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
   } catch (err) {
     console.error("STK Callback error:", err);
-    res.json({ ResultCode: 1, ResultDesc: "Failed" });
+    return res.json({ ResultCode: 1, ResultDesc: "Failed" });
   }
 });
+
 
 export default router;
