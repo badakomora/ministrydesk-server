@@ -18,7 +18,8 @@ const port = process.env.PORT;
 
 
 const allowedClients = [
-  'http://localhost:3000',
+  // 'http://localhost:3000',
+   'https://pagfamily.vercel.app',
 ];
 
 // Enhanced CORS configuration
