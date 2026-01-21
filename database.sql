@@ -79,6 +79,7 @@ CREATE TABLE accounts (
     itemid INT,
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),  -- transaction time
     mpesaref VARCHAR(50),
+    failreason TEXT,
     status VARCHAR(20) DEFAULT 'PENDING',
     checkoutrequestid TEXT
 );
