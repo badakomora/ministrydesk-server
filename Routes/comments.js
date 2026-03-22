@@ -42,8 +42,7 @@ router.get("/list/:itemid", async (req, res) => {
   c.userid,
   c.created_at,
   u.fullname,
-  u.nationalrole AS nationalrole,
-  u.executiverole AS executiverole,
+  u.nationalrole AS nationalrole,=
   u.districtrole AS districtrole,
   u.assemblyrole AS assemblyrole,
   ch.name AS churchname

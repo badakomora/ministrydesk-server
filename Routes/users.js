@@ -139,7 +139,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 // ---------- VERIFY OTP (Step 2: User enters OTP) ----------
 router.post("/verifyotp", async (req, res) => {
   try {
@@ -174,7 +173,6 @@ router.post("/verifyotp", async (req, res) => {
   }
 });
 
-
 router.post("/list", async (req, res) => {
   try {
     const {churchid} = req.body
@@ -205,4 +203,5 @@ router.get("/users", async (req, res) => {
     res.status(500).json({ message: "Server error fetching users" });
   }
 });
+
 export default router;
