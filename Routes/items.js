@@ -42,7 +42,7 @@ router.post(
         category,
         department,
         title,
-        datePosted,
+        created_at,
         description,
         offerTithes = 0,
         offerDonations = 0,
@@ -79,8 +79,8 @@ router.post(
       const inserted = await pool.query(
         `INSERT INTO items 
           (churchid, userid, category, department, title, datePosted, description,
-           documentFile, documentFileName, audioFile, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering,  visibility,verses)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+           documentFile, documentFileName, audioFile, created_at,offerTithes, offerDonations, requestSpecialPrayers, contributeOffering,  visibility,verses)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
          RETURNING id`,
         [
           churchid,
@@ -88,11 +88,12 @@ router.post(
           category,
           department,
           title,
-          datePosted,
+          new Date(),
           description,
           documentUrl,
           documentFileName, 
           audioUrl,
+          created_at,
           offerTithesNum,
           offerDonationsNum,
           requestSpecialPrayersNum,
