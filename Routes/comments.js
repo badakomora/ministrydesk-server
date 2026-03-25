@@ -1,11 +1,11 @@
-
 import express from "express";
 import pool from "../db.js"; // your PostgreSQL connection
 
 const router = express.Router();
 
+// ADD COMMENT
 router.post("/add", async (req, res) => {
-  const { itemid, userid, comment } = req.body;
+  const { itemid, userid, comment, visibility } = req.body;
 
   try {
     // Validate required fields
@@ -13,12 +13,11 @@ router.post("/add", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // INSERT into your table
     const result = await pool.query(
-      `INSERT INTO comments (itemid, userid, comment, created_at)
-       VALUES ($1, $2, $3, NOW())
+      `INSERT INTO comments (itemid, userid, comment, visibility, created_at)
+       VALUES ($1, $2, $3, $4, NOW())
        RETURNING *`,
-      [itemid, userid, comment]
+      [itemid, userid, comment, visibility || "1"] // fallback safety
     );
 
     res.status(200).json({
@@ -31,30 +30,29 @@ router.post("/add", async (req, res) => {
   }
 });
 
+// GET COMMENTS BY ITEM ID
 router.get("/list/:itemid", async (req, res) => {
   const { itemid } = req.params;
 
   try {
-   const result = await pool.query(
-  `SELECT 
-  c.id,
-  c.comment,
-  c.userid,
-  c.created_at,
-  u.fullname,
-  u.nationalrole AS nationalrole,=
-  u.districtrole AS districtrole,
-  u.assemblyrole AS assemblyrole,
-  ch.name AS churchname
-FROM comments c
-JOIN users u ON u.id = c.userid
-JOIN churches ch ON u.churchid = ch.id
-WHERE c.itemid = $1
-ORDER BY c.created_at DESC
-`,
-  [itemid]
-);
-
+    const result = await pool.query(
+      `SELECT 
+        c.id,
+        c.comment,
+        c.userid,
+        c.created_at,
+        u.fullname,
+        u.nationalrole AS nationalrole,
+        u.districtrole AS districtrole,
+        u.assemblyrole AS assemblyrole,
+        ch.name AS churchname
+      FROM comments c
+      JOIN users u ON u.id = c.userid
+      JOIN churches ch ON u.churchid = ch.id
+      WHERE c.itemid = $1
+      ORDER BY c.created_at DESC`,
+      [itemid]
+    );
 
     res.json(result.rows);
   } catch (err) {
@@ -63,7 +61,7 @@ ORDER BY c.created_at DESC
   }
 });
 
-
+// UPDATE COMMENT
 router.put("/comments/update/:id", async (req, res) => {
   const { id } = req.params;
   const { comment } = req.body;
@@ -91,6 +89,7 @@ router.put("/comments/update/:id", async (req, res) => {
   }
 });
 
+// DELETE COMMENT
 router.delete("/comments/delete/:id", async (req, res) => {
   const { id } = req.params;
 

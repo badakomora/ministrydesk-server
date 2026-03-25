@@ -62,6 +62,7 @@ CREATE TABLE items (
   created_at TIMESTAMP DEFAULT NOW(),
   verses TEXT[] DEFAULT '{}'
   visibility VARCHAR(50);
+  discussion VARCHAR(50);
 );
 
 CREATE TABLE carouselfiles (
@@ -89,6 +90,7 @@ CREATE TABLE comments (
   itemid INT NOT NULL,
   userid INT NOT NULL,
   comment TEXT NOT NULL,
+  visibility VARCHAR(1) DEFAULT '1',
   created_at TIMESTAMP DEFAULT NOW()
 );
 

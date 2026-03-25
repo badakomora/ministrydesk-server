@@ -49,6 +49,7 @@ router.post(
         requestSpecialPrayers = 0,
         contributeOffering = 0,
          visibility,
+         discussion,
         verses = [] // <-- expecting array of titles
       } = req.body;
 
@@ -76,32 +77,33 @@ router.post(
       const versesArray = Array.isArray(verses) ? verses : [verses];
 
       // Insert item, now also storing documentFileName
-      const inserted = await pool.query(
-        `INSERT INTO items 
-          (churchid, userid, category, department, title, datePosted, description,
-           documentFile, documentFileName, audioFile, created_at,offerTithes, offerDonations, requestSpecialPrayers, contributeOffering,  visibility,verses)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
-         RETURNING id`,
-        [
-          churchid,
-          userid,
-          category,
-          department,
-          title,
-          new Date(),
-          description,
-          documentUrl,
-          documentFileName, 
-          audioUrl,
-          created_at,
-          offerTithesNum,
-          offerDonationsNum,
-          requestSpecialPrayersNum,
-          contributeOfferingNum,
-          visibility,
-          versesArray,
-        ]
-      );
+     const inserted = await pool.query(
+  `INSERT INTO items 
+    (churchid, userid, category, department, title, datePosted, description,
+     documentFile, documentFileName, audioFile, created_at, offerTithes, offerDonations, requestSpecialPrayers, contributeOffering, visibility, discussion, verses)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+   RETURNING id`,
+  [
+    churchid,
+    userid,
+    category,
+    department,
+    title,
+    new Date(),      // datePosted
+    description,
+    documentUrl,
+    documentFileName,
+    audioUrl,
+    created_at,
+    offerTithesNum,
+    offerDonationsNum,
+    requestSpecialPrayersNum,
+    contributeOfferingNum,
+    visibility,
+    discussion,
+    versesArray,
+  ]
+);
 
       const itemId = inserted.rows[0].id;
       console.log("Saved item id:", itemId);
