@@ -159,7 +159,7 @@ router.get("/list", async (req, res) => {
     LEFT JOIN carouselfiles c ON c.itemid = i.id
     GROUP BY i.id, u.fullname, ch.name
     ORDER BY i.id DESC;`);
-
+ 
     res.json(items.rows);
   } catch (err) {
     console.error(err);
@@ -194,5 +194,138 @@ router.get("/list/:itemid", async (req, res) => {
   }
 });
 
+
+// UPDATE ITEM
+router.put(
+  "/update/:itemid",
+  upload.fields([
+    { name: "documentFile", maxCount: 1 },
+    { name: "audioFile", maxCount: 1 },
+    { name: "carouselImages", maxCount: 10 },
+  ]),
+  async (req, res) => {
+    try {
+      const { itemid } = req.params;
+
+      const {
+        churchid,
+        userid,
+        category,
+        department,
+        title,
+        created_at,
+        description,
+        offerTithes = 0,
+        offerDonations = 0,
+        requestSpecialPrayers = 0,
+        contributeOffering = 0,
+        visibility,
+        discussion,
+        verses = [],
+      } = req.body;
+
+      const documentFile = req.files?.documentFile?.[0] || null;
+      const audioFile = req.files?.audioFile?.[0] || null;
+      const carouselImages = req.files?.carouselImages || [];
+
+      // Convert numbers
+      const offerTithesNum = Number(offerTithes) || 0;
+      const offerDonationsNum = Number(offerDonations) || 0;
+      const requestSpecialPrayersNum = Number(requestSpecialPrayers) || 0;
+      const contributeOfferingNum = Number(contributeOffering) || 0;
+
+      const versesArray = Array.isArray(verses) ? verses : [verses];
+
+      // Get existing item (to preserve old files if not replaced)
+      const existing = await pool.query(
+        "SELECT * FROM items WHERE id = $1",
+        [itemid]
+      );
+
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+
+      const current = existing.rows[0];
+
+      // File handling (keep old if no new upload)
+      const documentUrl = documentFile
+        ? getFileServerUrl(documentFile.filename, "uploads")
+        : current.documentfile;
+
+      const documentFileName = documentFile
+        ? documentFile.originalname
+        : current.documentfilename;
+
+      const audioUrl = audioFile
+        ? getFileServerUrl(audioFile.filename, "uploads")
+        : current.audiofile;
+
+      // Update item
+      await pool.query(
+        `UPDATE items SET
+          churchid = $1,
+          userid = $2,
+          category = $3,
+          department = $4,
+          title = $5,
+          description = $6,
+          documentFile = $7,
+          documentFileName = $8,
+          audioFile = $9,
+          created_at = $10,
+          offerTithes = $11,
+          offerDonations = $12,
+          requestSpecialPrayers = $13,
+          contributeOffering = $14,
+          visibility = $15,
+          discussion = $16,
+          verses = $17
+        WHERE id = $18`,
+        [
+          churchid,
+          userid,
+          category,
+          department,
+          title,
+          description,
+          documentUrl,
+          documentFileName,
+          audioUrl,
+          created_at,
+          offerTithesNum,
+          offerDonationsNum,
+          requestSpecialPrayersNum,
+          contributeOfferingNum,
+          visibility,
+          discussion,
+          versesArray,
+          itemid,
+        ]
+      );
+
+      // OPTIONAL: replace carousel images (delete old + insert new)
+      if (carouselImages.length > 0) {
+        // delete old
+        await pool.query("DELETE FROM carouselfiles WHERE itemid = $1", [id]);
+
+        // insert new
+        for (const img of carouselImages) {
+          const imageUrl = getFileServerUrl(img.filename, "uploads");
+          await pool.query(
+            `INSERT INTO carouselfiles (itemid, filepath)
+             VALUES ($1, $2)`,
+            [id, imageUrl]
+          );
+        }
+      }
+
+      res.json({ success: true, message: "Item updated successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+);
 
 export default router;
