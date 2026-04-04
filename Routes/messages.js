@@ -68,4 +68,33 @@ router.post("/messages", async (req, res) => {
   }
 });
 
+
+router.get('/messageinquiry/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const query = `
+      SELECT 
+       *
+      FROM messages
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Error fetching message inquiries:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch message inquiries',
+      error: error.message,
+    });
+  }
+});
+
 export default router;

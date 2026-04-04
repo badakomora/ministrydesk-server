@@ -204,4 +204,33 @@ router.get("/users", async (req, res) => {
   }
 });
 
+
+router.get('/churchmember/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const query = `
+      SELECT 
+       *
+      FROM users
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Error fetching church members:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch church member',
+      error: error.message,
+    });
+  }
+});
+
 export default router;

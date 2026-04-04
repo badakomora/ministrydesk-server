@@ -68,4 +68,35 @@ router.post("/prayerrequests", async (req, res) => {
   }
 });
 
+
+router.get('/requests/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const query = `
+      SELECT 
+        *
+      FROM prayerrequests
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [userId]);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Error fetching prayer requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch prayer requests',
+      error: error.message,
+    });
+  }
+});
+
+
+
 export default router;
