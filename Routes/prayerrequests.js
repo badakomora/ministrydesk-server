@@ -69,7 +69,8 @@ router.post("/prayerrequests", async (req, res) => {
 });
 
 
-router.get('/requests/:userId', async (req, res) => {
+
+router.get("/requests/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 

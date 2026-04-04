@@ -205,9 +205,9 @@ router.get("/users", async (req, res) => {
 });
 
 
-router.get('/churchmember/:userId', async (req, res) => {
+router.get("/churchmember/:itemId", async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { itemId } = req.params;
 
     const query = `
       SELECT 
@@ -216,7 +216,7 @@ router.get('/churchmember/:userId', async (req, res) => {
       WHERE id = $1
     `;
 
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [itemId]);
 
     res.json({
       success: true,

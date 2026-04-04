@@ -69,7 +69,7 @@ router.post("/messages", async (req, res) => {
 });
 
 
-router.get('/messageinquiry/:userId', async (req, res) => {
+router.get("/messageinquiry/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
