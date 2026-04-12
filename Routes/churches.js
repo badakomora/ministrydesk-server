@@ -87,10 +87,8 @@ router.post("/church", async (req, res) => {
   }
 });
 
-router.get("/church/:id", async (req, res) => {
+router.get("/mychurch/:id", async (req, res) => {
   const { id } = req.params;
-  console.log("Fetching church with ID:", id);
-
   if (!id) {
     return res.status(400).json({ message: "Church ID is required" });
   }
