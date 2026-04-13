@@ -5,9 +5,9 @@ const router = express.Router();
 
 router.post("/new", async (req, res) => {
   try {
-    const { idnumber, description } = req.body;
+    const { idnumber, description, churchid } = req.body;
 
-    if (!idnumber || !description) {
+    if (!idnumber || !description || !churchid) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -22,10 +22,10 @@ router.post("/new", async (req, res) => {
       userid = userResult.rows[0].id;
     }
      const result = await pool.query(
-      `INSERT INTO prayerrequests (userid, description) 
-       VALUES ($1, $2) 
+      `INSERT INTO prayerrequests (userid, description, churchid) 
+       VALUES ($1, $2, $3) 
        RETURNING *`,
-      [userid, description ]
+      [userid, description, churchid ]
     );
       res.status(200).json({
       message: "Prayer Request received and saved successfully!",
