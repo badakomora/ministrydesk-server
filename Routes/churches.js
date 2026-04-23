@@ -51,7 +51,7 @@ router.post("/register", async (req, res) => {
 // ---------------------------
 router.get("/list", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, name FROM churches ORDER BY id ASC");
+    const result = await pool.query("SELECT * FROM churches ORDER BY id ASC");
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching churches:", error);
@@ -95,7 +95,7 @@ router.get("/mychurch/:id", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT name FROM churches WHERE id = $1",
+      "SELECT * FROM churches WHERE id = $1",
       [id]
     );
 
