@@ -12,6 +12,7 @@ CREATE TABLE churches (
   location VARCHAR(255),
   phone VARCHAR(50),
   email VARCHAR(150),
+  status INTEGER DEFAULT 0,
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
