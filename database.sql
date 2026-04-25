@@ -13,6 +13,8 @@ CREATE TABLE churches (
   phone VARCHAR(50),
   email VARCHAR(150),
   status INTEGER DEFAULT 0,
+  regionid int,
+  pastor VARCHAR(255),
   datecreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

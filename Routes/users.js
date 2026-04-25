@@ -233,4 +233,59 @@ router.get("/churchmember/:itemId", async (req, res) => {
   }
 });
 
+router.post("/reverend", async (req, res) => {
+  try {
+    const { regionid } = req.body;
+
+    if (!regionid) {
+      return res.status(400).json({
+        success: false,
+        message: "regionid is required",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM users
+      WHERE regionid = $1 AND assemblyrole = 'A1'
+      ORDER BY id DESC
+      `,
+      [regionid]
+    );
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching reverends:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+/**
+ * Fetch all overseers
+ */
+router.post("/overseers", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM users
+      WHERE districtrole = 'D1'
+      ORDER BY id DESC
+      `
+    );
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching overseers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
 export default router;
