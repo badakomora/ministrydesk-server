@@ -110,8 +110,11 @@ CREATE TABLE messages (
 CREATE TABLE prayerrequests(
   id SERIAL PRIMARY KEY,
   userid INT,
+  fullname VARCHAR(150),
+  phonenumber VARCHAR(20),
   description TEXT NOT NULL,
   churchid INT,
   status INT DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
 );

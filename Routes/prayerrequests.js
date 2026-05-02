@@ -76,9 +76,17 @@ router.get("/requests/:userId", async (req, res) => {
 
     const query = `
       SELECT 
-        *
+        prayerrequests.id,
+        prayerrequests.userid,
+        prayerrequests.churchid,
+        users.fullname,
+        users.id,
+        prayerrequests.description,
+        prayerrequests.status,
+        prayerrequests.created_at
       FROM prayerrequests
-      WHERE id = $1
+      INNER JOIN users ON prayerrequests.userid = users.id
+      WHERE prayerrequests.id = $1
     `;
 
     const result = await pool.query(query, [userId]);
