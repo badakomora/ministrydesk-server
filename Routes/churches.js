@@ -59,14 +59,40 @@ router.get("/list", async (req, res) => {
   }
 });
 
-router.get("/list/:regionid", async (req, res) => {
-   const { regionid } = req.params;
+router.get("/list/:regionid/:churchid", async (req, res) => {
+  const { regionid, churchid } = req.params;
+
   try {
-    const result = await pool.query("SELECT * FROM churches WHERE regionid = $1 ORDER BY id ASC", [regionid]);
+    // 1. Get category of logged-in user's church
+    const churchInfo = await pool.query(
+      `SELECT categoryid FROM churches WHERE id = $1`,
+      [churchid]
+    );
+
+    if (!churchInfo.rows.length) {
+      return res.status(404).json({ message: "Church not found" });
+    }
+
+    const categoryid = churchInfo.rows[0].categoryid;
+
+    // 2. Fetch churches in same region + same category
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM churches
+      WHERE regionid = $1
+      AND categoryid = $2
+      ORDER BY id ASC
+      `,
+      [regionid, categoryid]
+    );
+
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching churches:", error);
-    res.status(500).json({ message: "Server error while fetching churches." });
+    res.status(500).json({
+      message: "Server error while fetching churches.",
+    });
   }
 });
 

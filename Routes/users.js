@@ -235,32 +235,44 @@ router.get("/churchmember/:itemId", async (req, res) => {
 
 router.post("/reverend", async (req, res) => {
   try {
-    const { regionid } = req.body;
+    const { regionid, churchid } = req.body;
 
-    if (!regionid) {
+    if (!regionid || !churchid) {
       return res.status(400).json({
-        success: false,
-        message: "regionid is required",
+        message: "regionid and churchid are required",
       });
     }
 
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM users
-      WHERE regionid = $1 AND assemblyrole = 'A1'
-      ORDER BY id DESC
-      `,
-      [regionid]
+    // Get church category
+    const churchInfo = await pool.query(
+      `SELECT categoryid FROM churches WHERE id = $1`,
+      [churchid]
     );
 
-    res.status(200).json(result.rows);
+    if (!churchInfo.rows.length) {
+      return res.status(404).json({ message: "Church not found" });
+    }
+
+    const categoryid = churchInfo.rows[0].categoryid;
+
+    // Fetch reverends
+    const result = await pool.query(
+      `
+      SELECT u.*
+      FROM users u
+      JOIN churches c ON u.churchid = c.id
+      WHERE u.regionid = $1
+      AND u.assemblyrole = 'A1'
+      AND c.categoryid = $2
+      ORDER BY u.id DESC
+      `,
+      [regionid, categoryid]
+    );
+
+    res.json(result.rows);
   } catch (error) {
-    console.error("Error fetching reverends:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -269,13 +281,38 @@ router.post("/reverend", async (req, res) => {
  */
 router.post("/overseers", async (req, res) => {
   try {
+    const { churchid } = req.body;
+
+    if (!churchid) {
+      return res.status(400).json({
+        success: false,
+        message: "churchid is required",
+      });
+    }
+
+    // 1. Get category of logged-in user's church
+    const churchInfo = await pool.query(
+      `SELECT categoryid FROM churches WHERE id = $1`,
+      [churchid]
+    );
+
+    if (!churchInfo.rows.length) {
+      return res.status(404).json({ message: "Church not found" });
+    }
+
+    const categoryid = churchInfo.rows[0].categoryid;
+
+    // 2. Get overseers only in that category
     const result = await pool.query(
       `
-      SELECT *
-      FROM users
-      WHERE districtrole = 'D1'
-      ORDER BY id DESC
-      `
+      SELECT u.*
+      FROM users u
+      JOIN churches c ON u.churchid = c.id
+      WHERE u.districtrole = 'D1'
+      AND c.categoryid = $1
+      ORDER BY u.id DESC
+      `,
+      [categoryid]
     );
 
     res.status(200).json(result.rows);
