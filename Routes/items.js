@@ -1,4 +1,3 @@
-// server/routes/items.js
 import express from "express";
 import multer from "multer";
 import pool from "../db.js"; // your PostgreSQL connection
